@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      completed_quests: {
+        Row: {
+          completed_at: string
+          id: string
+          quest_id: string
+          wallet: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          quest_id: string
+          wallet: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          quest_id?: string
+          wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "completed_quests_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "quests"
+            referencedColumns: ["quest_id"]
+          },
+          {
+            foreignKeyName: "completed_quests_wallet_fkey"
+            columns: ["wallet"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["wallet"]
+          },
+        ]
+      }
+      quests: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          quest_id: string
+          quest_link: string | null
+          reward_points: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description: string
+          quest_id?: string
+          quest_link?: string | null
+          reward_points?: number
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          quest_id?: string
+          quest_link?: string | null
+          reward_points?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          email: string
+          joined_at: string
+          points: number
+          twitter_username: string
+          wallet: string
+        }
+        Insert: {
+          email: string
+          joined_at?: string
+          points?: number
+          twitter_username: string
+          wallet: string
+        }
+        Update: {
+          email?: string
+          joined_at?: string
+          points?: number
+          twitter_username?: string
+          wallet?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
