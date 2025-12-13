@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Quest } from '@/lib/supabase';
-import { ExternalLink, Check, Loader2, Zap } from 'lucide-react';
+import { ExternalLink, Check, Loader2, Zap, Lock } from 'lucide-react';
 
 interface QuestCardProps {
   quest: Quest;
@@ -10,15 +10,39 @@ interface QuestCardProps {
 
 export function QuestCard({ quest, completed, onComplete }: QuestCardProps) {
   const [loading, setLoading] = useState(false);
+  const [linkVisited, setLinkVisited] = useState(false);
+
+  // Check localStorage for visited status on mount
+  useEffect(() => {
+    const visitedKey = `quest_visited_${quest.quest_id}`;
+    const visited = localStorage.getItem(visitedKey);
+    if (visited === 'true') {
+      setLinkVisited(true);
+    }
+  }, [quest.quest_id]);
+
+  const handleVisitLink = () => {
+    if (quest.quest_link) {
+      const visitedKey = `quest_visited_${quest.quest_id}`;
+      localStorage.setItem(visitedKey, 'true');
+      setLinkVisited(true);
+      window.open(quest.quest_link, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   const handleComplete = async () => {
     setLoading(true);
     try {
       await onComplete();
+      // Clear visited status after completion
+      const visitedKey = `quest_visited_${quest.quest_id}`;
+      localStorage.removeItem(visitedKey);
     } finally {
       setLoading(false);
     }
   };
+
+  const canComplete = !quest.quest_link || linkVisited;
 
   return (
     <div 
@@ -52,15 +76,16 @@ export function QuestCard({ quest, completed, onComplete }: QuestCardProps) {
 
         <div className="flex flex-col gap-2 min-w-[140px]">
           {quest.quest_link && (
-            <a
-              href={quest.quest_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-neon-outline text-sm px-4 py-2 flex items-center justify-center gap-2"
+            <button
+              onClick={handleVisitLink}
+              disabled={completed}
+              className={`btn-neon-outline text-sm px-4 py-2 flex items-center justify-center gap-2 ${
+                linkVisited && !completed ? 'border-green-500/50 text-green-400' : ''
+              } ${completed ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              <ExternalLink className="w-4 h-4 text-secondary" />
-              Visit Link
-            </a>
+              <ExternalLink className={`w-4 h-4 ${linkVisited && !completed ? 'text-green-400' : 'text-secondary'}`} />
+              {linkVisited && !completed ? 'Visited' : 'Visit Link'}
+            </button>
           )}
           
           {completed ? (
@@ -71,11 +96,17 @@ export function QuestCard({ quest, completed, onComplete }: QuestCardProps) {
           ) : (
             <button
               onClick={handleComplete}
-              disabled={loading || quest.status === 'inactive'}
+              disabled={loading || quest.status === 'inactive' || !canComplete}
               className="btn-neon text-sm px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+              title={!canComplete ? 'Visit the link first to complete this quest' : ''}
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
+              ) : !canComplete ? (
+                <>
+                  <Lock className="w-4 h-4" />
+                  Complete
+                </>
               ) : (
                 'Complete'
               )}
