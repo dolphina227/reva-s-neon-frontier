@@ -13,6 +13,7 @@ export function Navbar() {
     { path: '/', label: 'Home' },
     { path: '/leaderboard', label: 'Leaderboard' },
     { path: '/quests', label: 'Quests' },
+    { path: '/mine', label: 'Mine' },
   ];
 
   return (
