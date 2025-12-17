@@ -9,7 +9,7 @@ export function Footer() {
 
   return (
     <footer className="relative z-10 py-8 border-t border-[hsl(var(--lum-gold)/0.1)]">
-      <div className="container mx-auto px-6">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="flex flex-col items-center gap-4">
           {/* Social Links */}
           <div className="flex items-center gap-4">
