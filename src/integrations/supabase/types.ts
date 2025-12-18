@@ -86,6 +86,87 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_codes: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          uses_count: number
+          wallet: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          uses_count?: number
+          wallet: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          uses_count?: number
+          wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_codes_wallet_fkey"
+            columns: ["wallet"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["wallet"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          points_awarded: number
+          referral_code: string
+          referred_wallet: string
+          referrer_wallet: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          referral_code: string
+          referred_wallet: string
+          referrer_wallet: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          points_awarded?: number
+          referral_code?: string
+          referred_wallet?: string
+          referrer_wallet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referral_code_fkey"
+            columns: ["referral_code"]
+            isOneToOne: false
+            referencedRelation: "referral_codes"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "referrals_referred_wallet_fkey"
+            columns: ["referred_wallet"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["wallet"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_wallet_fkey"
+            columns: ["referrer_wallet"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["wallet"]
+          },
+        ]
+      }
       users: {
         Row: {
           email: string
@@ -115,7 +196,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_referral_code: { Args: never; Returns: string }
+      process_referral: {
+        Args: { p_referral_code: string; p_referred_wallet: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
