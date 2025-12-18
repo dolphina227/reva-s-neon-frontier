@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Quest, getAllUsers, getQuests, getUserCount } from '@/lib/supabase';
+import { User, Quest, ReferralCode, Referral, getAllUsers, getQuests, getUserCount, getUserReferralCodes, getUserReferrals } from '@/lib/supabase';
 
 const PAGE_SIZE = 100;
 
@@ -120,4 +120,65 @@ export function useRealtimeUserCount() {
   }, [fetchCount]);
 
   return count;
+}
+
+export function useRealtimeReferrals(wallet: string | undefined) {
+  const [codes, setCodes] = useState<ReferralCode[]>([]);
+  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    if (!wallet) {
+      setCodes([]);
+      setReferrals([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [codesData, referralsData] = await Promise.all([
+        getUserReferralCodes(wallet),
+        getUserReferrals(wallet)
+      ]);
+      setCodes(codesData);
+      setReferrals(referralsData);
+    } catch (error) {
+      console.error('Error fetching referral data:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [wallet]);
+
+  useEffect(() => {
+    fetchData();
+
+    const channel = supabase
+      .channel('referral-updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'referrals' },
+        () => {
+          fetchData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'referral_codes' },
+        () => {
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData]);
+
+  const stats = {
+    totalReferrals: referrals.length,
+    totalPointsEarned: referrals.reduce((sum, r) => sum + r.points_awarded, 0)
+  };
+
+  return { codes, referrals, stats, loading, refetch: fetchData };
 }

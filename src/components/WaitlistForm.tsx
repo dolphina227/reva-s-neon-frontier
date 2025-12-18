@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
-import { registerUser, getUser } from '@/lib/supabase';
+import { useSearchParams } from 'react-router-dom';
+import { registerUser, getUser, validateReferralCode } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { Check, Loader2, Mail, Wallet, AtSign, ArrowRight, Sparkles } from 'lucide-react';
+import { Check, Loader2, Mail, Wallet, AtSign, ArrowRight, Sparkles, Gift, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface WaitlistFormProps {
@@ -12,10 +13,50 @@ interface WaitlistFormProps {
 export function WaitlistForm({ onSuccess }: WaitlistFormProps) {
   const { address, isConnected } = useAccount();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [twitter, setTwitter] = useState('');
+  const [referralCode, setReferralCode] = useState('');
+  const [referralValid, setReferralValid] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
+  const [validatingCode, setValidatingCode] = useState(false);
   const [joined, setJoined] = useState(false);
+
+  // Check for referral code in URL
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      setReferralCode(refCode.toUpperCase());
+      validateCode(refCode);
+    }
+  }, [searchParams]);
+
+  const validateCode = async (code: string) => {
+    if (!code || code.length < 5) {
+      setReferralValid(null);
+      return;
+    }
+    
+    setValidatingCode(true);
+    try {
+      const isValid = await validateReferralCode(code);
+      setReferralValid(isValid);
+    } catch (error) {
+      setReferralValid(false);
+    } finally {
+      setValidatingCode(false);
+    }
+  };
+
+  const handleReferralCodeChange = (value: string) => {
+    const upperCode = value.toUpperCase();
+    setReferralCode(upperCode);
+    if (upperCode.length >= 5) {
+      validateCode(upperCode);
+    } else {
+      setReferralValid(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,12 +93,24 @@ export function WaitlistForm({ onSuccess }: WaitlistFormProps) {
         return;
       }
 
-      await registerUser(address, email, twitter);
+      // Register with referral code if valid
+      const validRefCode = referralValid ? referralCode : undefined;
+      await registerUser(address, email, twitter, validRefCode);
+      
       setJoined(true);
-      toast({
-        title: 'Welcome to Luminosity!',
-        description: 'You earned +10,000 points for joining the waitlist!',
-      });
+      
+      if (validRefCode) {
+        toast({
+          title: 'Welcome to Noxara!',
+          description: 'You earned +10,000 points! Your referrer earned +2,500 points!',
+        });
+      } else {
+        toast({
+          title: 'Welcome to Noxara!',
+          description: 'You earned +10,000 points for joining the waitlist!',
+        });
+      }
+      
       onSuccess?.();
     } catch (error) {
       console.error('Registration error:', error);
@@ -123,7 +176,7 @@ export function WaitlistForm({ onSuccess }: WaitlistFormProps) {
         <p className="text-sm sm:text-base text-muted-foreground">Get early access & earn rewards</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
         {/* Email Field */}
         <div className="space-y-1.5 sm:space-y-2">
           <label className="block text-xs sm:text-sm font-medium text-foreground/80 pl-1">
@@ -183,6 +236,46 @@ export function WaitlistForm({ onSuccess }: WaitlistFormProps) {
               required
             />
           </div>
+        </div>
+
+        {/* Referral Code Field */}
+        <div className="space-y-1.5 sm:space-y-2">
+          <label className="block text-xs sm:text-sm font-medium text-foreground/80 pl-1 flex items-center gap-2">
+            Referral Code <span className="text-muted-foreground/50">(optional)</span>
+          </label>
+          <div className="relative group">
+            <div className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[hsl(var(--layer-2))] flex items-center justify-center transition-colors group-focus-within:bg-[hsl(var(--lum-gold)/0.15)]">
+              <Gift className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground group-focus-within:text-primary" />
+            </div>
+            <input
+              type="text"
+              placeholder="NOXA-XXXXXXXX"
+              value={referralCode}
+              onChange={(e) => handleReferralCodeChange(e.target.value)}
+              className={`w-full h-12 sm:h-14 pl-14 sm:pl-[4.5rem] pr-12 rounded-xl sm:rounded-2xl border bg-[hsl(var(--input)/0.5)] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 transition-all font-mono text-sm sm:text-base uppercase ${
+                referralValid === true 
+                  ? 'border-green-500/50 focus:border-green-500 focus:ring-green-500/10' 
+                  : referralValid === false 
+                    ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/10'
+                    : 'border-[hsl(var(--border)/0.5)] focus:border-[hsl(var(--lum-gold)/0.5)] focus:ring-[hsl(var(--lum-gold)/0.1)]'
+              }`}
+            />
+            <div className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2">
+              {validatingCode ? (
+                <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+              ) : referralValid === true ? (
+                <Check className="w-4 h-4 text-green-500" />
+              ) : referralValid === false ? (
+                <X className="w-4 h-4 text-red-500" />
+              ) : null}
+            </div>
+          </div>
+          {referralValid === true && (
+            <p className="text-xs text-green-500 pl-1">Valid code! Your referrer will earn +2,500 points</p>
+          )}
+          {referralValid === false && referralCode.length >= 5 && (
+            <p className="text-xs text-red-500 pl-1">Invalid referral code</p>
+          )}
         </div>
 
         {/* Submit Button */}
