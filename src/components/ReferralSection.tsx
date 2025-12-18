@@ -134,51 +134,55 @@ export function ReferralSection() {
         </div>
       </div>
 
-      {/* Referral Codes */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2">
-          <Link2 className="w-4 h-4" />
-          Your Referral Codes ({codes.length})
-        </h3>
-        
-        <div className="grid gap-2">
-          {codes.map((codeData) => (
-            <div
-              key={codeData.id}
-              className="flex items-center justify-between p-3 rounded-xl bg-[hsl(var(--layer-2)/0.5)] border border-[hsl(var(--border)/0.3)] group hover:border-[hsl(var(--lum-gold)/0.3)] transition-colors"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <code 
-                  className="font-mono text-xs sm:text-sm text-primary font-medium cursor-pointer hover:text-primary/80 truncate"
-                  onClick={() => copyCodeOnly(codeData.code)}
-                >
-                  {codeData.code}
-                </code>
-                <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
-                  {codeData.uses_count} uses
-                </span>
-              </div>
-              
-              <button
-                onClick={() => copyToClipboard(codeData.code)}
-                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-[hsl(var(--lum-gold)/0.1)] border border-[hsl(var(--lum-gold)/0.2)] text-primary text-xs font-medium hover:bg-[hsl(var(--lum-gold)/0.2)] transition-colors shrink-0"
+      {/* Referral Code */}
+      {codes.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-foreground/80 flex items-center gap-2">
+            <Link2 className="w-4 h-4" />
+            Your Referral Code
+          </h3>
+          
+          <div className="p-4 rounded-xl bg-[hsl(var(--layer-2)/0.5)] border border-[hsl(var(--border)/0.3)] hover:border-[hsl(var(--lum-gold)/0.3)] transition-colors">
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <code 
+                className="font-mono text-lg sm:text-xl text-primary font-bold cursor-pointer hover:text-primary/80"
+                onClick={() => copyCodeOnly(codes[0].code)}
               >
-                {copiedCode === codeData.code ? (
+                {codes[0].code}
+              </code>
+              <span className="text-xs text-muted-foreground">
+                {codes[0].uses_count} successful referrals
+              </span>
+            </div>
+            
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => copyCodeOnly(codes[0].code)}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(var(--layer-2)/0.8)] border border-[hsl(var(--border)/0.3)] text-foreground text-sm font-medium hover:bg-[hsl(var(--layer-2))] transition-colors"
+              >
+                <Copy className="w-4 h-4" />
+                Copy Code
+              </button>
+              <button
+                onClick={() => copyToClipboard(codes[0].code)}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(var(--lum-gold)/0.15)] border border-[hsl(var(--lum-gold)/0.3)] text-primary text-sm font-medium hover:bg-[hsl(var(--lum-gold)/0.25)] transition-colors"
+              >
+                {copiedCode === codes[0].code ? (
                   <>
-                    <Check className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Copied</span>
+                    <Check className="w-4 h-4" />
+                    Copied!
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Copy Link</span>
+                    <Link2 className="w-4 h-4" />
+                    Copy Link
                   </>
                 )}
               </button>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Footer note */}
       <p className="text-center text-[10px] sm:text-xs text-muted-foreground/50 mt-5">
