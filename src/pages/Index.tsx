@@ -77,7 +77,7 @@ const Index = () => {
               Noxara
             </h1>
             <p className="text-muted-foreground text-xs sm:text-sm px-4">
-              Join the waitlist. Complete quests. Earn points.
+              Noxara is a participation-based platform designed to identify, reward, and empower early contributors through structured access and on-chain utilities.
             </p>
           </div>
 
